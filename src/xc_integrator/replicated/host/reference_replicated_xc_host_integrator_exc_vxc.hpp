@@ -992,7 +992,7 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
 
       // Update electronic eps and vxc
       eps[iPt]      += -1.0 * total_prho/dn;
-      vrho[iPt]     +=  2 * ( -1.0 * total_prho / dn + (-1.2 * std::sqrt(total_erho) * std::sqrt(total_prho) * total_prho 
+      vrho[iPt]     +=  ( -1.0 * total_prho / dn + (-1.2 * std::sqrt(total_erho) * std::sqrt(total_prho) * total_prho 
                         + 6.6 * total_erho * total_prho * total_prho ) / (dn * dn) );
 
       // Assign protonic eps and vxc
@@ -1066,7 +1066,7 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
   
   }  // End OpenMP region
 
-  std::cout << "N_EL = " << std::setprecision(12) << std::scientific << *N_EL << std::endl;
+  //std::cout << "N_EL = " << std::setprecision(12) << std::scientific << *N_EL << std::endl;
   //std::cout << "EXC1 = " << std::setprecision(12) << std::scientific << *EXC1 << std::endl
   //std::cout << "EXC2 = " << std::setprecision(12) << std::scientific << *EXC2 << std::endl;
 
