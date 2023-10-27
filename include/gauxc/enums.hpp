@@ -52,4 +52,12 @@ enum class ExecutionSpace {
 };
 
 
+/**
+ *  @brief Specification of NEO Electronc Proton Correlation Functional
+ */
+enum class EPCFunctional {
+  EPC17,  ///< EPC-17-2 functional, LDA
+  EPC19   ///< EPC-19 functional, GGA
+};
 } // namespace GauXC
+
