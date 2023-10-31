@@ -76,6 +76,24 @@ protected:
                             value_type* VXCs, int64_t ldvxcs,
                             value_type* VXCz, int64_t ldvxcz, 
                             value_type* EXC, value_type *N_EL );
+
+  void neo_exc_vxc_local_work_( const value_type* P1s, int64_t ldp1s,
+                                 const value_type* P2s, int64_t ldp2s,
+                                 const value_type* P2z, int64_t ldp2z,
+                                 value_type* VXC1s, int64_t ldvxc1s,
+                                 value_type* VXC2s, int64_t ldvxc2s,
+                                 value_type* VXC2z, int64_t ldvxc2z,
+                                 value_type* EXC, value_type *N_EL );
+
+  void neo_exc_vxc_local_work_( const value_type* P1s, int64_t ldp1s,
+                                 const value_type* P1z, int64_t ldp1z,
+                                 const value_type* P2s, int64_t ldp2s,
+                                 const value_type* P2z, int64_t ldp2z,
+                                 value_type* VXC1s, int64_t ldvxc1s,
+                                 value_type* VXC1z, int64_t ldvxc1z,
+                                 value_type* VXC2s, int64_t ldvxc2s,
+                                 value_type* VXC2z, int64_t ldvxc2z,
+                                 value_type* EXC, value_type *N_EL );
                             
   void exc_grad_local_work_( const value_type* P, int64_t ldp, value_type* EXC_GRAD );
   void exx_local_work_( const value_type* P, int64_t ldp, value_type* K, int64_t ldk,
