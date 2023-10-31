@@ -126,7 +126,7 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
                      value_type* VXC1s, int64_t ldvxc1s,
                      value_type* VXC2s, int64_t ldvxc2s,
                      value_type* VXC2z, int64_t ldvxc2z,
-                     value_type* EXC ){
+                     value_type* EXC1,  value_type* EXC2 ){
   
   const auto& basis  = this->load_balancer_->basis();
   const auto& basis2 = this->load_balancer_->basis2();
@@ -158,7 +158,7 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
                              VXC1s, ldvxc1s,
                              VXC2s, ldvxc2s,
                              VXC2z, ldvxc2z,
-                             EXC, &N_EL );
+                             EXC1, EXC2, &N_EL );
   });
 
 
@@ -171,7 +171,8 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
     this->reduction_driver_->allreduce_inplace( VXC1s, nbf1*nbf1,  ReductionOp::Sum );
     this->reduction_driver_->allreduce_inplace( VXC2s, nbf2*nbf1,  ReductionOp::Sum );
     this->reduction_driver_->allreduce_inplace( VXC2z, nbf2*nbf2,  ReductionOp::Sum );
-    this->reduction_driver_->allreduce_inplace( EXC,   1    ,  ReductionOp::Sum );
+    this->reduction_driver_->allreduce_inplace( EXC1,  1    ,  ReductionOp::Sum );
+    this->reduction_driver_->allreduce_inplace( EXC2,  1    ,  ReductionOp::Sum );
     this->reduction_driver_->allreduce_inplace( &N_EL, 1    ,  ReductionOp::Sum );
 
   });
@@ -457,7 +458,7 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
                             value_type* VXC1s, int64_t ldvxc1s,
                             value_type* VXC2s, int64_t ldvxc2s,
                             value_type* VXC2z, int64_t ldvxc2z,
-                            value_type* EXC, value_type *N_EL ) {
+                            value_type* EXC1, value_type* EXC2, value_type *N_EL ) {
   
   //GAUXC_GENERIC_EXCEPTION("neo_exc_vxc_local_work_ RKS NYI");
   
@@ -499,7 +500,8 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
   std::fill(VXC2s, VXC2s + nbf2 * ldvxc2s, 0.0);
   std::fill(VXC2z, VXC2z + nbf2 * ldvxc2z, 0.0);
 
-  *EXC = 0.;
+  *EXC1 = 0.;
+  *EXC2 = 0.;
  
     
   // Loop over tasks
@@ -750,9 +752,9 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
       for( int32_t i = 0; i < npts; ++i ) {
         *N_EL += weights[i] * den_eval[i];
         // Electronic XC (VXC+EPC)
-        *EXC  += eps[i]     * den_eval[i];
+        *EXC1  += eps[i]     * den_eval[i];
         // Protonic (EPC)
-        *EXC  += eps2[i]    * (den2_eval[2*i] +  den2_eval[2*i+1]);    
+        *EXC2  += eps2[i]    * (den2_eval[2*i] +  den2_eval[2*i+1]);    
       }
 
       // Increment VXC
@@ -799,7 +801,7 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
                             value_type* VXC1z, int64_t ldvxc1z,
                             value_type* VXC2s, int64_t ldvxc2s,
                             value_type* VXC2z, int64_t ldvxc2z,
-                            value_type* EXC, value_type *N_EL ) {
+                            value_type* EXC1, value_type* EXC2, value_type *N_EL ) {
   
   GAUXC_GENERIC_EXCEPTION("neo_exc_vxc_local_work_ UKS NYI");
 }
