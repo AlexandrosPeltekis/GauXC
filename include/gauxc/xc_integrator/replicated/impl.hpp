@@ -96,7 +96,7 @@ typename ReplicatedXCIntegrator<MatrixType>::exc_vxc_type_uks
 
 template <typename MatrixType>
 typename ReplicatedXCIntegrator<MatrixType>::exc_vxc_type_neo_rks
-  ReplicatedXCIntegrator<MatrixType>::neo_eval_exc_vxc_( const MatrixType& elec_Ps, const MatrixType& prot_Ps, const MatrixType& prot_Pz ) {
+  ReplicatedXCIntegrator<MatrixType>::eval_neo_exc_vxc_( const MatrixType& elec_Ps, const MatrixType& prot_Ps, const MatrixType& prot_Pz ) {
 
   if( not pimpl_ ) GAUXC_PIMPL_NOT_INITIALIZED();
   matrix_type elec_VXCs( elec_Ps.rows(), elec_Ps.cols() );
@@ -105,7 +105,7 @@ typename ReplicatedXCIntegrator<MatrixType>::exc_vxc_type_neo_rks
   value_type  elec_EXC;
   value_type  prot_EXC;
 
-  pimpl_->neo_eval_exc_vxc( elec_Ps.rows(), elec_Ps.cols(), prot_Ps.rows(), prot_Ps.cols(),
+  pimpl_->eval_neo_exc_vxc( elec_Ps.rows(), elec_Ps.cols(), prot_Ps.rows(), prot_Ps.cols(),
                             elec_Ps.data(), elec_Ps.rows(),
                             prot_Ps.data(), prot_Ps.rows(),
                             prot_Pz.data(), prot_Pz.rows(),
@@ -120,7 +120,7 @@ typename ReplicatedXCIntegrator<MatrixType>::exc_vxc_type_neo_rks
 
 template <typename MatrixType>
 typename ReplicatedXCIntegrator<MatrixType>::exc_vxc_type_neo_uks
-  ReplicatedXCIntegrator<MatrixType>::neo_eval_exc_vxc_( const MatrixType& elec_Ps, const MatrixType& elec_Pz, const MatrixType& prot_Ps, const MatrixType& prot_Pz ) {
+  ReplicatedXCIntegrator<MatrixType>::eval_neo_exc_vxc_( const MatrixType& elec_Ps, const MatrixType& elec_Pz, const MatrixType& prot_Ps, const MatrixType& prot_Pz ) {
 
   if( not pimpl_ ) GAUXC_PIMPL_NOT_INITIALIZED();
   matrix_type elec_VXCs( elec_Ps.rows(), elec_Ps.cols() );
@@ -130,7 +130,7 @@ typename ReplicatedXCIntegrator<MatrixType>::exc_vxc_type_neo_uks
   value_type  elec_EXC;
   value_type  prot_EXC;
 
-  pimpl_->neo_eval_exc_vxc( elec_Ps.rows(), elec_Ps.cols(), prot_Ps.rows(), prot_Ps.cols(),
+  pimpl_->eval_neo_exc_vxc( elec_Ps.rows(), elec_Ps.cols(), prot_Ps.rows(), prot_Ps.cols(),
                             elec_Ps.data(), elec_Ps.rows(),
                             elec_Pz.data(), elec_Pz.rows(),
                             prot_Ps.data(), prot_Ps.rows(),

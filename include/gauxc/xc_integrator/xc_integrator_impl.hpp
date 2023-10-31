@@ -32,8 +32,8 @@ protected:
   virtual value_type    integrate_den_( const MatrixType& P ) = 0;
   virtual exc_vxc_type_rks  eval_exc_vxc_ ( const MatrixType& P ) = 0;
   virtual exc_vxc_type_uks  eval_exc_vxc_ ( const MatrixType& Pscalar, const MatrixType& Pz ) = 0;
-  virtual exc_vxc_type_neo_rks  neo_eval_exc_vxc_ ( const MatrixType& elec_Ps, const MatrixType& prot_Ps, const MatrixType& prot_Pz) = 0;
-  virtual exc_vxc_type_neo_uks  neo_eval_exc_vxc_ ( const MatrixType& elec_Ps, const MatrixType& elec_Pz, const MatrixType& prot_Ps, const MatrixType& prot_Pz ) = 0;
+  virtual exc_vxc_type_neo_rks  eval_neo_exc_vxc_ ( const MatrixType& elec_Ps, const MatrixType& prot_Ps, const MatrixType& prot_Pz) = 0;
+  virtual exc_vxc_type_neo_uks  eval_neo_exc_vxc_ ( const MatrixType& elec_Ps, const MatrixType& elec_Pz, const MatrixType& prot_Ps, const MatrixType& prot_Pz ) = 0;
   virtual exc_grad_type eval_exc_grad_( const MatrixType& P ) = 0;
   virtual exx_type      eval_exx_     ( const MatrixType&     P, 
                                         const IntegratorSettingsEXX& settings ) = 0;
@@ -74,12 +74,12 @@ public:
     return eval_exc_vxc_(Pscalar, Pz);
   }
   
-  exc_vxc_type_neo_rks neo_eval_exc_vxc( const MatrixType& elec_Ps, const MatrixType& prot_Ps, const MatrixType& prot_Pz ){
-    return neo_eval_exc_vxc_(elec_Ps, prot_Ps, prot_Pz);
+  exc_vxc_type_neo_rks eval_neo_exc_vxc( const MatrixType& elec_Ps, const MatrixType& prot_Ps, const MatrixType& prot_Pz ){
+    return eval_neo_exc_vxc_(elec_Ps, prot_Ps, prot_Pz);
   }
 
-  exc_vxc_type_neo_uks neo_eval_exc_vxc( const MatrixType& elec_Ps, const MatrixType& elec_Pz, const MatrixType& prot_Ps, const MatrixType& prot_Pz ){
-    return neo_eval_exc_vxc_(elec_Ps, elec_Pz, prot_Ps, prot_Pz);
+  exc_vxc_type_neo_uks eval_neo_exc_vxc( const MatrixType& elec_Ps, const MatrixType& elec_Pz, const MatrixType& prot_Ps, const MatrixType& prot_Pz ){
+    return eval_neo_exc_vxc_(elec_Ps, elec_Pz, prot_Ps, prot_Pz);
   }
 
   /** Integrate EXC gradient for RKS
