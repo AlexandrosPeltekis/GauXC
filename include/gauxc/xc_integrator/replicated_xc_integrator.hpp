@@ -30,8 +30,8 @@ public:
   using value_type     = typename XCIntegratorImpl<MatrixType>::value_type;
   using exc_vxc_type_rks   = typename XCIntegratorImpl<MatrixType>::exc_vxc_type_rks;
   using exc_vxc_type_uks   = typename XCIntegratorImpl<MatrixType>::exc_vxc_type_uks;
-  using exc_vxc_type_neo_rks   = typename XCIntegratorImpl<MatrixType>::neo_exc_vxc_type;
-  using exc_vxc_type_neo_uks   = typename XCIntegratorImpl<MatrixType>::neo_exc_vxc_type_UKS;
+  using exc_vxc_type_neo_rks   = typename XCIntegratorImpl<MatrixType>::exc_vxc_type_neo_rks;
+  using exc_vxc_type_neo_uks   = typename XCIntegratorImpl<MatrixType>::exc_vxc_type_neo_uks;
   using exc_grad_type  = typename XCIntegratorImpl<MatrixType>::exc_grad_type;
   using exx_type       = typename XCIntegratorImpl<MatrixType>::exx_type;
 

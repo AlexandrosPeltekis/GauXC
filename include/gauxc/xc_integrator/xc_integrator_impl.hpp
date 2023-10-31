@@ -22,8 +22,8 @@ public:
   using value_type     = typename matrix_type::value_type;
   using exc_vxc_type_rks   = typename XCIntegrator<MatrixType>::exc_vxc_type_rks;
   using exc_vxc_type_uks   = typename XCIntegrator<MatrixType>::exc_vxc_type_uks;
-  using exc_vxc_type_neo_rks   = typename XCIntegrator<MatrixType>::neo_exc_vxc_type;
-  using exc_vxc_type_neo_uks   = typename XCIntegrator<MatrixType>::neo_exc_vxc_type_UKS;
+  using exc_vxc_type_neo_rks   = typename XCIntegrator<MatrixType>::exc_vxc_type_neo_rks;
+  using exc_vxc_type_neo_uks   = typename XCIntegrator<MatrixType>::exc_vxc_type_neo_uks;
   using exc_grad_type  = typename XCIntegrator<MatrixType>::exc_grad_type;
   using exx_type       = typename XCIntegrator<MatrixType>::exx_type;
 
@@ -74,11 +74,11 @@ public:
     return eval_exc_vxc_(Pscalar, Pz);
   }
   
-  neo_exc_vxc_type neo_eval_exc_vxc( const MatrixType& elec_Ps, const MatrixType& prot_Ps, const MatrixType& prot_Pz ){
+  exc_vxc_type_neo_rks neo_eval_exc_vxc( const MatrixType& elec_Ps, const MatrixType& prot_Ps, const MatrixType& prot_Pz ){
     return neo_eval_exc_vxc_(elec_Ps, prot_Ps, prot_Pz);
   }
 
-  neo_exc_vxc_type_UKS neo_eval_exc_vxc( const MatrixType& elec_Ps, const MatrixType& elec_Pz, const MatrixType& prot_Ps, const MatrixType& prot_Pz ){
+  exc_vxc_type_neo_uks neo_eval_exc_vxc( const MatrixType& elec_Ps, const MatrixType& elec_Pz, const MatrixType& prot_Ps, const MatrixType& prot_Pz ){
     return neo_eval_exc_vxc_(elec_Ps, elec_Pz, prot_Ps, prot_Pz);
   }
 
