@@ -30,6 +30,10 @@ protected:
   std::shared_ptr<basis_map_type> basis_map_;
   std::shared_ptr<shell_pair_type> shell_pairs_;
 
+  std::shared_ptr<basis_type> basis2_;
+  std::shared_ptr<basis_map_type> basis_map2_;
+  std::shared_ptr<shell_pair_type> shell_pairs2_;
+
   std::vector< XCTask >     local_tasks_;
 
   LoadBalancerState         state_;
@@ -50,6 +54,13 @@ public:
     const basis_type&, const MolMeta&, size_t pv );
   LoadBalancerImpl( const RuntimeEnvironment&, const Molecule&, const MolGrid& mg,  
     const basis_type&, std::shared_ptr<MolMeta>, size_t pv );
+  
+  LoadBalancerImpl( const RuntimeEnvironment&, const Molecule&, const MolGrid& mg,  
+    const basis_type&, const basis_type&, size_t pv );
+  LoadBalancerImpl( const RuntimeEnvironment&, const Molecule&, const MolGrid& mg,  
+    const basis_type&, const basis_type&, const MolMeta&, size_t pv );
+  LoadBalancerImpl( const RuntimeEnvironment&, const Molecule&, const MolGrid& mg,  
+    const basis_type&, const basis_type&, std::shared_ptr<MolMeta>, size_t pv );
 
   LoadBalancerImpl( const LoadBalancerImpl& );
   LoadBalancerImpl( LoadBalancerImpl&& ) noexcept;
