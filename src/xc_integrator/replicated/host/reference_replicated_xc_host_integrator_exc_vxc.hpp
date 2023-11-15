@@ -532,7 +532,28 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
                            value_type* VXC2z, int64_t ldvxc2z,
                            value_type* EXC1, value_type* EXC2, value_type *N_EL ) {
   
+  // Profiler to locate slow parts of the code
+  std::chrono::duration<double> tSetup(0);
+  std::chrono::duration<double> tAlloc(0);
+  std::chrono::duration<double> tGenSubmatMap_elec(0);
+  std::chrono::duration<double> tGenSubmatMap_prot(0);
+  std::chrono::duration<double> tEvalCollocation_elec(0);
+  std::chrono::duration<double> tEvalCollocation_prot(0);
+  std::chrono::duration<double> tEvalXMat_elec(0);
+  std::chrono::duration<double> tEvalXMat_prot(0);
+  std::chrono::duration<double> tEvalUV_elec(0);
+  std::chrono::duration<double> tEvalUV_prot(0);
+  std::chrono::duration<double> tEvalEXCVXC_elec(0);
+  std::chrono::duration<double> tEvalEXCVXC_prot(0);
+  std::chrono::duration<double> tEvalEPC(0);
+  std::chrono::duration<double> tEvalZMat_elec(0);
+  std::chrono::duration<double> tEvalZMat_prot(0);
+  std::chrono::duration<double> tIncVXC_elec(0);
+  std::chrono::duration<double> tIncVXC_prot(0);
   
+
+  auto sSetup = std::chrono::high_resolution_clock::now();
+
   // Determine is electronic subsystem is RKS or UKS
   const bool is_uks = (P1z != nullptr) and (VXC1z != nullptr);
   const bool is_rks = not is_uks; // TODO: GKS
@@ -584,6 +605,9 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
   // Loop over tasks
   const size_t ntasks = tasks.size();
 
+  auto eSetup = std::chrono::high_resolution_clock::now();
+  tSetup += eSetup - sSetup;
+
   #pragma omp parallel
   {
 
@@ -591,7 +615,7 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
 
   #pragma omp for schedule(dynamic)
   for( size_t iT = 0; iT < ntasks; ++iT ) {
-
+    auto sAlloc = std::chrono::high_resolution_clock::now();
     //std::cout << iT << "/" << ntasks << std::endl;
     // Alias current task
     const auto& task = tasks[iT];
@@ -694,6 +718,8 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
     // No GGA for NEO yet
     //----------------------End Protonic System Setup------------------------
 
+    auto eAlloc = std::chrono::high_resolution_clock::now();
+    tAlloc += eAlloc - sAlloc;
 
     //std::cout << "Task: " << iT << "/" << ntasks << std::endl;
     //std::cout << "Electronic nbe: " << nbe << std::endl;
@@ -701,10 +727,14 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
 
     //----------------------Start Calculating Electronic Density & UV Variable------------------------
     // Get the submatrix map for batch
+    auto sGenSubmatMap_elec = std::chrono::high_resolution_clock::now();
     std::vector< std::array<int32_t, 3> > submat_map;
     std::tie(submat_map, std::ignore) =
           gen_compressed_submat_map(basis_map, task.bfn_screening.shell_list, nbf, nbf);
+    auto eGenSubmatMap_elec = std::chrono::high_resolution_clock::now();
+    tGenSubmatMap_elec += sGenSubmatMap_elec - eGenSubmatMap_elec;
 
+    auto sEvalCollocation_elec = std::chrono::high_resolution_clock::now();
     // Evaluate Collocation (+ Grad)
     if( func.is_gga() )
       lwd->eval_collocation_gradient( npts, nshells, nbe, points, basis, shell_list, 
@@ -712,7 +742,11 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
     else
       lwd->eval_collocation( npts, nshells, nbe, points, basis, shell_list, 
         basis_eval );
+    auto eEvalCollocation_elec = std::chrono::high_resolution_clock::now();
+    tEvalCollocation_elec += eEvalCollocation_elec - sEvalCollocation_elec;
     
+
+    auto sEvalXMat_elec = std::chrono::high_resolution_clock::now();
     // Evaluate X matrix (fac * P * B) -> store in Z
     const auto xmat_fac = is_rks ? 2.0 : 1.0; // TODO Fix for spinor RKS input
     lwd->eval_xmat( npts, nbf, nbe, submat_map, xmat_fac, P1s, ldp1s, basis_eval, nbe,
@@ -723,7 +757,11 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
       lwd->eval_xmat( npts, nbf, nbe, submat_map, 1.0, P1z, ldp1z, basis_eval, nbe,
         zmat_z, nbe, nbe_scr );
     }
+    auto eEvalXMat_elec = std::chrono::high_resolution_clock::now();
+    tEvalXMat_elec += sEvalXMat_elec - eEvalXMat_elec;
 
+
+    auto sEvalUV_elec = std::chrono::high_resolution_clock::now();
     // Evaluate U and V variables
     if( func.is_gga() ) {
       if(is_rks) {
@@ -735,20 +773,26 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
           dbasis_z_eval, zmat, nbe, zmat_z, nbe, den_eval, dden_x_eval, 
           dden_y_eval, dden_z_eval, gamma );
       }
-     } else {
+    }else {
       if(is_rks) {
         lwd->eval_uvvar_lda_rks( npts, nbe, basis_eval, zmat, nbe, den_eval );
       } else if(is_uks) {
         lwd->eval_uvvar_lda_uks( npts, nbe, basis_eval, zmat, nbe, zmat_z, nbe,
           den_eval );
       }
-     }
+    } 
+    auto eEvalUV_elec = std::chrono::high_resolution_clock::now();
+    tEvalUV_elec += eEvalUV_elec - sEvalUV_elec;
 
+
+    auto sEvalEXCVXC_elec = std::chrono::high_resolution_clock::now();
     // Evaluate XC functional
     if( func.is_gga() )
       func.eval_exc_vxc( npts, den_eval, gamma, eps, vrho, vgamma );
     else
       func.eval_exc_vxc( npts, den_eval, eps, vrho );
+    auto eEvalEXCVXC_elec = std::chrono::high_resolution_clock::now();
+    tEvalEXCVXC_elec += eEvalEXCVXC_elec - sEvalEXCVXC_elec;
     //----------------------End Calculating Electronic Density & UV Variable------------------------
 
 
@@ -759,27 +803,46 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
     if(evalProtonic){
       //std::tie(submat_map2, std::ignore) =
       //    gen_compressed_submat_map(basis_map2, shell_list2_vector, nbf2, nbf2);
+      auto sGenSubmatMap_prot = std::chrono::high_resolution_clock::now();
       std::tie(submat_map2, std::ignore) =
             gen_compressed_submat_map(basis_map2, task.bfn2_screening.shell_list, nbf2, nbf2);
+      auto eGenSubmatMap_prot = std::chrono::high_resolution_clock::now();
+      tGenSubmatMap_prot += sGenSubmatMap_prot - eGenSubmatMap_prot;
+
 
       // Evaluate Collocation 
+      auto sEvalCollocation_prot = std::chrono::high_resolution_clock::now();
       lwd->eval_collocation( npts, nshells2, nbe2, points, basis2, shell_list2,
         basis2_eval );
+      auto eEvalCollocation_prot = std::chrono::high_resolution_clock::now();
+      tEvalCollocation_prot += eEvalCollocation_prot - sEvalCollocation_prot;
+
 
       // Evaluate X matrix (P * B) -> store in Z
       // NEED THE FACTOR OF 2 HERE!
+      auto sEvalXMat_prot = std::chrono::high_resolution_clock::now();
       lwd->eval_xmat( npts, nbf2, nbe2, submat_map2, 2.0, P2s, ldp2s, basis2_eval, nbe2,
         zmat2, nbe2, nbe_scr );
       lwd->eval_xmat( npts, nbf2, nbe2, submat_map2, 2.0, P2z, ldp2z, basis2_eval, nbe2,
         zmat2_z, nbe2, nbe_scr );
+      auto eEvalXMat_prot = std::chrono::high_resolution_clock::now();
+      tEvalXMat_prot += eEvalXMat_prot - eEvalXMat_prot;
+
 
       // Evaluate U and V variables
+      auto sEvalUV_prot = std::chrono::high_resolution_clock::now();
       lwd->eval_uvvar_lda_uks( npts, nbe2, basis2_eval, zmat2, nbe2, zmat2_z, nbe2, 
         den2_eval );
+      auto eEvalUV_prot = std::chrono::high_resolution_clock::now();
+      tEvalUV_prot += eEvalUV_prot - eEvalUV_prot;
 
+
+      auto sEvalEXCVXC_prot = std::chrono::high_resolution_clock::now();
       // No protonic XC functional. Fill with eps and vrho to be 0.0
       std::fill_n(eps2,  npts,   0.);
       std::fill_n(vrho2, npts*2, 0.);
+      auto eEvalEXCVXC_prot = std::chrono::high_resolution_clock::now();
+      tEvalEXCVXC_prot += eEvalEXCVXC_prot - sEvalEXCVXC_prot;
     }
     //----------------------End Calculating Protonic Density & UV Variable------------------------
 
@@ -788,6 +851,7 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
 
     //----------------------Start EPC functional Evaluation---------------------------------------
     if(evalProtonic){
+      auto sEvalEPC = std::chrono::high_resolution_clock::now();
       if(this->load_balancer_->epc_functional() == EPCFunctional::EPC17){
         for (int32_t iPt = 0; iPt < npts; iPt++ ){
           // Get Electronic density scalar (RKS)
@@ -825,12 +889,16 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
       } else{
         GAUXC_GENERIC_EXCEPTION("Only EPC17 is supported in GauXC");
       }
+      auto eEvalEPC = std::chrono::high_resolution_clock::now();
+      tEvalEPC += eEvalEPC - sEvalEPC;
     } // End if(evalProtonic)
     //----------------------End EPC functional Evaluation---------------------------------------
  
 
 
+
     //----------------------Begin Evaluating Electronic ZMat---------------------------- 
+    auto sEvalZMat_elec = std::chrono::high_resolution_clock::now();
     // Factor weights into XC results
     for( int32_t i = 0; i < npts; ++i ) {
       eps[i]  *= weights[i];
@@ -866,6 +934,8 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
         lwd->eval_zmat_lda_vxc_uks( npts, nbe, vrho, basis_eval, zmat, nbe, zmat_z, nbe );
       }
     }
+    auto eEvalZMat_elec = std::chrono::high_resolution_clock::now();
+    tEvalZMat_elec += eEvalZMat_elec - sEvalZMat_elec;
     //----------------------End Evaluating Electronic ZMat----------------------------
 
 
@@ -873,6 +943,7 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
 
     //----------------------Begin Evaluating Protonic ZMat---------------------------- 
     if(evalProtonic){
+      auto sEvalZMat_prot = std::chrono::high_resolution_clock::now();
       // Factor weights into XC results
       for( int32_t i = 0; i < npts; ++i ) {
         eps2[i]      *= weights[i];
@@ -882,6 +953,8 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
 
       // Evaluate Z matrix for VXC
       lwd->eval_zmat_lda_vxc_uks( npts, nbe2, vrho2, basis2_eval, zmat2, nbe2, zmat2_z, nbe2 );
+      auto eEvalZMat_prot = std::chrono::high_resolution_clock::now();
+      tEvalZMat_prot += eEvalZMat_prot - sEvalZMat_prot;
     }
     //----------------------End Evaluating Protonic ZMat----------------------------
 
@@ -894,6 +967,7 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
 
       // Electronic XC (VXC+EPC)
       // Scalar integrations
+      auto sIncVXC_elec = std::chrono::high_resolution_clock::now();
       for( int32_t i = 0; i < npts; ++i ) {
         const auto den = is_rks ? den_eval[i] : (den_eval[2*i] + den_eval[2*i+1]);
         *N_EL += weights[i] * den;
@@ -905,6 +979,8 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
       if(not is_rks) 
         lwd->inc_vxc( npts, nbf, nbe, basis_eval, submat_map, zmat_z, nbe, VXC1z, ldvxc1z,
           nbe_scr );
+      auto eIncVXC_elec = std::chrono::high_resolution_clock::now();
+      tIncVXC_elec += eIncVXC_elec - sIncVXC_elec;
 
 
       // Protonic XC (EPC)
