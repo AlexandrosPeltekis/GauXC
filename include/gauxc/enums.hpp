@@ -51,13 +51,5 @@ enum class ExecutionSpace {
   Device ///< Execute task on the device (e.g. GPU)
 };
 
-
-/**
- *  @brief Specification of NEO Electronc Proton Correlation Functional
- */
-enum class EPCFunctional {
-  EPC17,  ///< EPC-17-2 functional, LDA
-  EPC19   ///< EPC-19 functional, GGA
-};
 } // namespace GauXC
 

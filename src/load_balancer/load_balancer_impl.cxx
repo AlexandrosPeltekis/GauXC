@@ -24,14 +24,13 @@ LoadBalancerImpl::LoadBalancerImpl( const RuntimeEnvironment& rt, const Molecule
 }
 
 LoadBalancerImpl::LoadBalancerImpl( const RuntimeEnvironment& rt, const Molecule& mol, 
-  const MolGrid& mg, const basis_type& basis, const basis_type& basis2, EPCFunctional epcfunc, 
+  const MolGrid& mg, const basis_type& basis, const basis_type& basis2,
   std::shared_ptr<MolMeta> molmeta, size_t pv ) :
   runtime_(rt), 
   mol_( std::make_shared<Molecule>(mol) ),
   mg_( std::make_shared<MolGrid>(mg)  ),
   basis_( std::make_shared<basis_type>(basis) ),
   basis2_( std::make_shared<basis_type>(basis2) ),
-  epc_functional_( epcfunc ),
   molmeta_( molmeta ),
   pad_value_(pv) { 
 
@@ -51,12 +50,12 @@ LoadBalancerImpl::LoadBalancerImpl( const RuntimeEnvironment& rt, const Molecule
   LoadBalancerImpl( rt, mol, mg, basis, std::make_shared<MolMeta>(mol), pv ) { }
 
 LoadBalancerImpl::LoadBalancerImpl( const RuntimeEnvironment& rt, const Molecule& mol, 
-  const MolGrid& mg, const basis_type& basis, const basis_type& basis2, EPCFunctional epcfunc, size_t pv ) :
-  LoadBalancerImpl( rt, mol, mg, basis, basis2, epcfunc, std::make_shared<MolMeta>(mol), pv ) { }
+  const MolGrid& mg, const basis_type& basis, const basis_type& basis2, size_t pv ) :
+  LoadBalancerImpl( rt, mol, mg, basis, basis2, std::make_shared<MolMeta>(mol), pv ) { }
 
 LoadBalancerImpl::LoadBalancerImpl( const RuntimeEnvironment& rt, const Molecule& mol, 
-  const MolGrid& mg, const basis_type& basis, const basis_type& basis2, EPCFunctional epcfunc, const MolMeta& molmeta, size_t pv ) :
-  LoadBalancerImpl( rt, mol, mg, basis, basis2, epcfunc, std::make_shared<MolMeta>(molmeta), pv ) { }
+  const MolGrid& mg, const basis_type& basis, const basis_type& basis2, const MolMeta& molmeta, size_t pv ) :
+  LoadBalancerImpl( rt, mol, mg, basis, basis2, std::make_shared<MolMeta>(molmeta), pv ) { }
 
 LoadBalancerImpl::LoadBalancerImpl( const LoadBalancerImpl& ) = default;
 LoadBalancerImpl::LoadBalancerImpl( LoadBalancerImpl&& ) noexcept = default;
@@ -152,10 +151,6 @@ const LoadBalancerImpl::basis_map_type& LoadBalancerImpl::basis_map2() const {
 }
 const LoadBalancerImpl::shell_pair_type& LoadBalancerImpl::shell_pairs2() const {
   return *shell_pairs2_;
-}
-
-const EPCFunctional& LoadBalancerImpl::epc_functional() const{
-  return epc_functional_;
 }
 
 const RuntimeEnvironment& LoadBalancerImpl::runtime() const {
