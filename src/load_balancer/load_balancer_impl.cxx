@@ -23,20 +23,13 @@ LoadBalancerImpl::LoadBalancerImpl( const RuntimeEnvironment& rt, const Molecule
 
 }
 
-LoadBalancerImpl::LoadBalancerImpl( const RuntimeEnvironment& rt, const Molecule& mol, 
-  const MolGrid& mg, const basis_type& basis, const basis_type& basis2,
-  std::shared_ptr<MolMeta> molmeta, size_t pv ) :
-  runtime_(rt), 
-  mol_( std::make_shared<Molecule>(mol) ),
-  mg_( std::make_shared<MolGrid>(mg)  ),
-  basis_( std::make_shared<basis_type>(basis) ),
-  basis2_( std::make_shared<basis_type>(basis2) ),
-  molmeta_( molmeta ),
-  pad_value_(pv) { 
-
-  shell_pairs_ = std::make_shared<shell_pair_type>(*basis_);
-  basis_map_   = std::make_shared<basis_map_type>(*basis_, mol);
-
+LoadBalancerImpl::LoadBalancerImpl(const RuntimeEnvironment& rt, const Molecule& mol, 
+  const MolGrid& mg, const basis_type& basis, const basis_type& basis2, 
+  std::shared_ptr<MolMeta> molmeta, size_t pv) : 
+  LoadBalancerImpl(rt, mol, mg, basis, molmeta, pv) {
+    
+  // Unique initializations for the second basis
+  basis2_ = std::make_shared<basis_type>(basis2);
   shell_pairs2_ = std::make_shared<shell_pair_type>(*basis2_);
   basis_map2_   = std::make_shared<basis_map_type>(*basis2_, mol);
 }
