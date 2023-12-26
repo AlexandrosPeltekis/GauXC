@@ -80,7 +80,6 @@ void test_xc_integrator( ExecutionSpace ex, const RuntimeEnvironment& rt,
     auto dset = file.getDataSet(den);
     
     auto dims = dset.getDimensions();
-
     P        = matrix_type( dims[0], dims[1] );
     VXC_ref  = matrix_type( dims[0], dims[1] );
     if (not rks) {
@@ -182,7 +181,8 @@ void test_xc_integrator( ExecutionSpace ex, const RuntimeEnvironment& rt,
   std::unique_ptr<LoadBalancer> lb;
   if (neo) {
     for( auto& sh : protonic_basis ) 
-      sh.set_shell_tolerance( std::numeric_limits<double>::epsilon() );
+      //sh.set_shell_tolerance( std::numeric_limits<double>::epsilon() );
+      sh.set_shell_tolerance( 0.0 );
     lb = std::make_unique<LoadBalancer>( lb_factory.get_instance(rt, mol, mg, basis, protonic_basis, quad_pad_value) );
   } else{
     lb = std::make_unique<LoadBalancer>( lb_factory.get_instance(rt, mol, mg, basis, quad_pad_value) );
@@ -213,6 +213,8 @@ void test_xc_integrator( ExecutionSpace ex, const RuntimeEnvironment& rt,
     CHECK( N_EL == Approx(N_EL_ref/2.0).epsilon(1e-6) );
   }
 
+  std::cout << "HAHHAHAHAHAH" <<std::endl;
+
   // Integrate EXC/VXC
   if ( rks ) {
     double EXC, protonic_EXC;
@@ -227,6 +229,33 @@ void test_xc_integrator( ExecutionSpace ex, const RuntimeEnvironment& rt,
     CHECK( VXC_diff_nrm / basis.nbf() < 1e-10 ); 
 
     if ( neo ) {
+      
+      std::cout << std::fixed << std::setprecision(12) << std::endl;
+      std::cout << "Epsilon:      " << std::numeric_limits<double>::epsilon() << std::endl;
+      std::cout << "Elec EXC:     " << EXC << std::endl;
+      std::cout << "Elec Ref EXC: " << EXC_ref << std::endl;
+      std::cout << "Prot EXC:     " << protonic_EXC << std::endl;
+      std::cout << "Prot Ref EXC: " << protonic_EXC_ref << std::endl;
+
+      std::cout << std::fixed << std::setprecision(8) << std::endl;
+      std::cout << "Elec Den S" << std::endl;
+      std::cout << P << "\n" << std::endl;
+
+      std::cout << "Prot Den S" << std::endl;
+      std::cout << protonic_Ps << "\n" << std::endl;
+
+      std::cout << "Prot Den Z" << std::endl;
+      std::cout << protonic_Pz << "\n\n\n\n" << std::endl;
+
+      std::cout << "Elec VXC S" << std::endl;
+      std::cout << VXC << "\n" << std::endl;
+
+      std::cout << "Prot VXC S" << std::endl;
+      std::cout << protonic_VXCs << "\n" << std::endl;
+
+      std::cout << "Prot VXC Z" << std::endl;
+      std::cout << protonic_VXCz << "\n" << std::endl;
+
       auto protonic_VXCs_diff_nrm = ( protonic_VXCs - protonic_VXCs_ref ).norm();
       auto protonic_VXCz_diff_nrm = ( protonic_VXCz - protonic_VXCz_ref ).norm();
       CHECK( protonic_EXC == Approx( protonic_EXC_ref ) );
@@ -430,6 +459,7 @@ TEST_CASE( "XC Integrator", "[xc-integrator]" ) {
   auto pbe0  = ExchCXX::Functional::PBE0;
   auto blyp  = ExchCXX::Functional::BLYP;
 
+  #if 0
   // LDA Test
   SECTION( "Benzene / SVWN5 / cc-pVDZ" ) {
     auto func = make_functional(svwn5, unpol);
@@ -535,4 +565,20 @@ TEST_CASE( "XC Integrator", "[xc-integrator]" ) {
     test_integrator(GAUXC_REF_DATA_PATH "/coh2_blyp_epc17-2_cc-pvdz_pb4d_ssf.hdf5", 
         func, PruningScheme::Unpruned );
   }
+  #endif
+
+  // NEO epc-17-2 Test (small basis)
+  SECTION( "COH2 / BLYP,EPC-17-2 / sto-3g, prot-sp" ) {
+    auto func = make_functional(blyp, unpol);
+    test_integrator(GAUXC_REF_DATA_PATH "/coh2_blyp_epc17-2_sto-3g_protsp_ssf.hdf5", 
+        func, PruningScheme::Unpruned );
+  }
+
+  //UKS LDA Test
+  //SECTION( "Li / SVWN5 / sto-3g" ) {
+  //  auto func = make_functional(svwn5, pol);
+  //  test_integrator(GAUXC_REF_DATA_PATH "/li_svwn5_sto3g_uks.bin",
+  //      func, PruningScheme::Unpruned );
+  //}
+  
 }

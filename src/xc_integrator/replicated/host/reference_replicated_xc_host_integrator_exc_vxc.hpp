@@ -191,8 +191,10 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
   });
 
 
-}           
-  
+}
+
+
+
 template <typename ValueType>
 void ReferenceReplicatedXCHostIntegrator<ValueType>::
   exc_vxc_local_work_( const value_type* Ps, int64_t ldps,
@@ -665,7 +667,25 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
     }
   }
 
-}
+  std::cout<< "Electronic VXC S: " << std::endl;
+  for( int32_t j = 0;   j < nbf; ++j ){
+  for( int32_t i = 0;   i < nbf; ++i ){
+    std::cout << VXCs[ i+j*nbf ] << "\n";
+  }
+  }
+  std::cout<< "\n\n" << std::endl;
+
+  std::cout<< "Electronic VXC Z: " << std::endl;
+  for( int32_t j = 0;   j < nbf; ++j ){
+  for( int32_t i = 0;   i < nbf; ++i ){
+    std::cout << VXCz[ i+j*nbf ] << "\n";
+  }
+  }
+  std::cout<< "\n\n" << std::endl;
+
+
+
+} 
 
 }
 }

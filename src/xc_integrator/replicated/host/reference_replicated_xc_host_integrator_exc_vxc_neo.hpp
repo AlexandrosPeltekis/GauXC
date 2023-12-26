@@ -570,6 +570,13 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
   }
   }
   }
+  std::cout<< "Electronic VXC S: " << std::endl;
+  for( int32_t j = 0;   j < nbf; ++j ){
+  for( int32_t i = 0;   i < nbf; ++i ){
+    std::cout << elec_VXCs[ i+j*nbf ] << "\n";
+  }
+  }
+  std::cout<< "\n\n" << std::endl;
 
   // Symmetrize Protonic VXC
   for( int32_t j = 0;   j < protonic_nbf; ++j ){
@@ -578,7 +585,22 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
     prot_VXCz[ j + i*prot_ldvxcz ] = prot_VXCz[ i + j*prot_ldvxcz ];
   }
   }
+
+  std::cout<< "Protonic VXC S: " << std::endl;
+  for( int32_t j = 0;   j < protonic_nbf; ++j ){
+  for( int32_t i = 0;   i < protonic_nbf; ++i ){
+    std::cout << prot_VXCs[ i+j*protonic_nbf ] << "\n";
+  }
+  }
+  std::cout<< "\n\n" << std::endl;
   
+  std::cout<< "Protonic VXC Z: " << std::endl;
+  for( int32_t j = 0;   j < protonic_nbf; ++j ){
+  for( int32_t i = 0;   i < protonic_nbf; ++i ){
+    std::cout << prot_VXCz[ i+j*protonic_nbf ] << "\n";
+  }
+  }
+  std::cout<< "\n\n" << std::endl;
 
 }
 
