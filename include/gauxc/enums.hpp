@@ -51,5 +51,5 @@ enum class ExecutionSpace {
   Device ///< Execute task on the device (e.g. GPU)
 };
 
-} // namespace GauXC
 
+} // namespace GauXC
