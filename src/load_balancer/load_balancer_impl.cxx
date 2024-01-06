@@ -28,7 +28,7 @@ LoadBalancerImpl::LoadBalancerImpl(const RuntimeEnvironment& rt, const Molecule&
   std::shared_ptr<MolMeta> molmeta, size_t pv) : 
   LoadBalancerImpl(rt, mol, mg, basis, molmeta, pv) {
     
-  // Unique initializations for the second basis
+  // Unique initializations for the protonic basis
   protonic_basis_       = std::make_shared<basis_type>(protonic_basis);
   protonic_basis_map_   = std::make_shared<basis_map_type>(*protonic_basis_, mol);
 }
