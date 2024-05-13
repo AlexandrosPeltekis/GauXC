@@ -456,7 +456,7 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
           protonic_basis_eval );
 
       // Evaluate X matrix (P * B) -> store in Z
-      const auto protonic_xmat_fac = is_rks ? 2.0 : 1.0;
+      const auto protonic_xmat_fac = protonic_is_rks ? 2.0 : 1.0;
       lwd->eval_xmat( npts, protonic_nbf, protonic_nbe, protonic_submat_map, protonic_xmat_fac, prot_Ps, prot_ldps, protonic_basis_eval, protonic_nbe,
         protonic_zmat,   protonic_nbe, nbe_scr );
 
@@ -653,10 +653,10 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
   *elec_EXC  = EXC_WORK + EPC_WORK;
   *prot_EXC  = EPC_WORK;
 
-  //std::cout << "N_EL = "     << std::setprecision(12) << std::scientific << *N_EL       << std::endl;
-  //std::cout << "N_PROT = "   << std::setprecision(12) << std::scientific << *N_PROT     << std::endl;
-  //std::cout << "elec_EXC = " << std::setprecision(12) << std::scientific << *elec_EXC   << std::endl;
-  //std::cout << "prot_EXC = " << std::setprecision(12) << std::scientific << *prot_EXC   << std::endl;
+  std::cout << "N_EL = "     << std::setprecision(12) << std::scientific << *N_EL       << std::endl;
+  std::cout << "N_PROT = "   << std::setprecision(12) << std::scientific << *N_PROT     << std::endl;
+  std::cout << "elec_EXC = " << std::setprecision(12) << std::scientific << *elec_EXC   << std::endl;
+  std::cout << "prot_EXC = " << std::setprecision(12) << std::scientific << *prot_EXC   << std::endl;
 
   // Symmetrize Electronic VXC
   for( int32_t j = 0;   j < nbf; ++j )
