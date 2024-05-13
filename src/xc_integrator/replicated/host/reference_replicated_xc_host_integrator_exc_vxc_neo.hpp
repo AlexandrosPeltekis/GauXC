@@ -263,12 +263,12 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
 
     // Allocate enough memory for batch
 
-    const size_t spin_dim_scal = is_rks ? 1 : 2;
+    const size_t spin_dim_scal = is_rks ? 1 : 2; // For NEO, only rks and uks is implemented
     
     // Things that every calc needs
     
 
-    // Use same scratch for both electronic and protonic
+    // Set up common scratch space for both electronic and protonic
     const int32_t scr_dim = std::max(nbe, protonic_nbe);
     host_data.nbe_scr .resize(scr_dim  * scr_dim);
     
@@ -323,28 +323,69 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
       dden_y_eval   = dden_x_eval + spin_dim_scal * npts;
       dden_z_eval   = dden_y_eval + spin_dim_scal * npts;
     }
-    
     //----------------------End Electronic System Setup------------------------
 
 
+
     //----------------------Start Protonic System Setup------------------------
-    // Set Up Memory (assuming UKS)
+    // Assuming uks for protonic system
+    bool protonic_is_rks = false;
+    bool protonic_is_uks = not protonic_is_rks;
+    const size_t protonic_spin_dim_scal = protonic_is_rks ? 1 : 2;
+    const size_t protonic_gga_dim_scal  = protonic_is_rks ? 1 : 3;
+    // Set Up Memory 
+    host_data.protonic_zmat      .resize( npts * protonic_nbe * protonic_spin_dim_scal );
     host_data.epc                .resize( npts );
-    host_data.protonic_vrho      .resize( npts * 2 );
-    host_data.protonic_zmat      .resize( npts * protonic_nbe * 2 );
-    // LDA
-    host_data.protonic_basis_eval .resize( npts * protonic_nbe );
-    host_data.protonic_den_scr    .resize( npts * 2);
+    host_data.protonic_vrho      .resize( npts * protonic_spin_dim_scal );
+    // LDA data requirements
+    if( epcfunc.is_lda() ){
+      host_data.protonic_basis_eval .resize( npts * protonic_nbe );
+      host_data.protonic_den_scr    .resize( npts * protonic_spin_dim_scal);
+    }
+
+    // GGA data requirements
+    if( epcfunc.is_gga() ){
+      host_data.protonic_basis_eval .resize( 4 * npts * protonic_nbe );
+      host_data.protonic_den_scr    .resize( protonic_spin_dim_scal * 4 * npts );
+      host_data.protonic_gamma      .resize( protonic_gga_dim_scal  * npts );
+      host_data.protonic_vgamma     .resize( protonic_gga_dim_scal  * npts );
+
+      host_data.cross_gamma         .resize( 4 * npts );
+      host_data.cross_vgamma        .resize( 4 * npts );
+    }
     // Alias/Partition out scratch memory
     auto* protonic_basis_eval = host_data.protonic_basis_eval.data();
     auto* protonic_den_eval   = host_data.protonic_den_scr.data();
     auto* protonic_zmat       = host_data.protonic_zmat.data();
-    decltype(protonic_zmat) protonic_zmat_z = protonic_zmat + protonic_nbe * npts;
+    decltype(protonic_zmat) protonic_zmat_z = nullptr;
+
+    if(!protonic_is_rks)
+      protonic_zmat_z = protonic_zmat + protonic_nbe * npts;
     
     auto* epc                 = host_data.epc.data();
+    auto* protonic_gamma      = host_data.protonic_gamma.data();
+    auto* cross_gamma         = host_data.cross_gamma.data();
     auto* protonic_vrho       = host_data.protonic_vrho.data();
-    // No GGA for NEO yet
+    auto* protonic_vgamma     = host_data.protonic_vgamma.data();
+    auto* cross_vgamma        = host_data.cross_vgamma.data();
+
+    value_type* dprotonic_basis_x_eval = nullptr;
+    value_type* dprotonic_basis_y_eval = nullptr;
+    value_type* dprotonic_basis_z_eval = nullptr;
+    value_type* dprotonic_den_x_eval = nullptr;
+    value_type* dprotonic_den_y_eval = nullptr;
+    value_type* dprotonic_den_z_eval = nullptr;
+
+    if( epcfunc.is_gga() ) {
+      dprotonic_basis_x_eval = protonic_basis_eval    + npts * protonic_nbe;
+      dprotonic_basis_y_eval = dprotonic_basis_x_eval + npts * protonic_nbe;
+      dprotonic_basis_z_eval = dprotonic_basis_y_eval + npts * protonic_nbe;
+      dprotonic_den_x_eval   = protonic_den_eval    + protonic_spin_dim_scal * npts;
+      dprotonic_den_y_eval   = dprotonic_den_x_eval + protonic_spin_dim_scal * npts;
+      dprotonic_den_z_eval   = dprotonic_den_y_eval + protonic_spin_dim_scal * npts;
+    }
     //----------------------End Protonic System Setup------------------------
+
 
 
     //std::cout << "Task: " << iT << "/" << ntasks << std::endl;
@@ -395,12 +436,6 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
           den_eval );
       }
      }
-
-    // Evaluate XC functional
-    if( func.is_gga() )
-      func.eval_exc_vxc( npts, den_eval, gamma, eps, vrho, vgamma );
-    else
-      func.eval_exc_vxc( npts, den_eval, eps, vrho );
     //----------------------End Calculating Electronic Density & UV Variable------------------------
 
 
@@ -412,26 +447,64 @@ void ReferenceReplicatedXCHostIntegrator<ValueType>::
       std::tie(protonic_submat_map, std::ignore) =
         gen_compressed_submat_map(protonic_basis_map, task.protonic_bfn_screening.shell_list, protonic_nbf, protonic_nbf);
 
-      // Evaluate Collocation 
-      lwd->eval_collocation( npts, protonic_nshells, protonic_nbe, points, protonic_basis, protonic_shell_list,
-        protonic_basis_eval );
+      // Evaluate Collocation (+ Grad)
+      if( epcfunc.is_gga() )
+        lwd->eval_collocation_gradient( npts, protonic_nshells, protonic_nbe, points, protonic_basis, protonic_shell_list,
+          protonic_basis_eval, dprotonic_basis_x_eval, dprotonic_basis_y_eval, dprotonic_basis_z_eval );  
+      else
+        lwd->eval_collocation( npts, protonic_nshells, protonic_nbe, points, protonic_basis, protonic_shell_list,
+          protonic_basis_eval );
 
       // Evaluate X matrix (P * B) -> store in Z
-      lwd->eval_xmat( npts, protonic_nbf, protonic_nbe, protonic_submat_map, 1.0, prot_Ps, prot_ldps, protonic_basis_eval, protonic_nbe,
+      const auto protonic_xmat_fac = is_rks ? 2.0 : 1.0;
+      lwd->eval_xmat( npts, protonic_nbf, protonic_nbe, protonic_submat_map, protonic_xmat_fac, prot_Ps, prot_ldps, protonic_basis_eval, protonic_nbe,
         protonic_zmat,   protonic_nbe, nbe_scr );
-      lwd->eval_xmat( npts, protonic_nbf, protonic_nbe, protonic_submat_map, 1.0, prot_Pz, prot_ldpz, protonic_basis_eval, protonic_nbe,
-        protonic_zmat_z, protonic_nbe, nbe_scr );
+
+      // X matrix for Pz
+      if(not protonic_is_rks) {
+        lwd->eval_xmat( npts, protonic_nbf, protonic_nbe, protonic_submat_map, protonic_xmat_fac, prot_Pz, prot_ldpz, protonic_basis_eval, protonic_nbe,
+          protonic_zmat_z, protonic_nbe, nbe_scr );
+      }
 
       // Evaluate U and V variables
-      lwd->eval_uvvar_lda_uks( npts, protonic_nbe, protonic_basis_eval, protonic_zmat, protonic_nbe, protonic_zmat_z, 
-        protonic_nbe, protonic_den_eval );
-
-      // No protonic XC functional. Fill with eps and vrho to be 0.0
-      std::fill_n(epc,  npts,   0.);
-      std::fill_n(protonic_vrho, npts*2, 0.);
+      if( epcfunc.is_gga() ){
+        if(protonic_is_rks) {
+          lwd->eval_uvvar_gga_rks( npts, protonic_nbe, protonic_basis_eval, dprotonic_basis_x_eval, dprotonic_basis_y_eval, dprotonic_basis_z_eval, 
+            protonic_zmat, protonic_nbe, protonic_den_eval, dprotonic_den_x_eval, dprotonic_den_y_eval, dprotonic_den_z_eval, 
+            protonic_gamma );
+        } else if(protonic_is_uks) {
+          lwd->eval_uvvar_gga_uks( npts, protonic_nbe, protonic_basis_eval, dprotonic_basis_x_eval, dprotonic_basis_y_eval, dprotonic_basis_z_eval, 
+            protonic_zmat, protonic_nbe, protonic_zmat_z, protonic_nbe, protonic_den_eval, dprotonic_den_x_eval, dprotonic_den_y_eval, dprotonic_den_z_eval, 
+            protonic_gamma );
+        }
+      } else {
+        if(protonic_is_rks) {
+          lwd->eval_uvvar_lda_rks( npts, protonic_nbe, protonic_basis_eval, protonic_zmat, protonic_nbe, protonic_den_eval );
+        } else if(protonic_is_uks) {
+          lwd->eval_uvvar_lda_uks( npts, protonic_nbe, protonic_basis_eval, protonic_zmat, protonic_nbe, protonic_zmat_z, 
+            protonic_nbe, protonic_den_eval );
+        }
+      }
     }
     //----------------------End Calculating Protonic Density & UV Variable------------------------
 
+
+
+    //----------------------Start Functional and Functional Derivative Evaluation------------------------
+    // Electronic system: Evaluate XC functional 
+    if( func.is_gga() )
+      func.eval_exc_vxc( npts, den_eval, gamma, eps, vrho, vgamma );
+    else
+      func.eval_exc_vxc( npts, den_eval, eps, vrho );
+
+    // Protonic system: No protonic XC functional. Fill with 0.0
+    std::fill_n(epc,  npts,   0.);
+    std::fill_n(protonic_vrho,  npts*protonic_spin_dim_scal, 0.);
+    if( epcfunc.is_gga() ){
+      std::fill_n(vgamma,       npts*protonic_gga_dim_scal,  0.);
+      std::fill_n(cross_vgamma, npts*4,                      0.);
+    }
+    //----------------------End Functional and Functional Derivative Evaluation------------------------
 
 
 

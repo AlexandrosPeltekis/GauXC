@@ -33,6 +33,10 @@ struct XCHostData {
 
   std::vector<F> epc;
   std::vector<F> protonic_vrho;
+  std::vector<F> protonic_gamma;
+  std::vector<F> protonic_vgamma;
+  std::vector<F> cross_gamma;
+  std::vector<F> cross_vgamma;
  
   std::vector<F> protonic_zmat;
   std::vector<F> protonic_gmat;
