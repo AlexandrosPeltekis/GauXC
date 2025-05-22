@@ -151,6 +151,45 @@ void ShellBatchedReplicatedXCIntegrator<BaseIntegratorType, IncoreIntegratorType
 
 template <typename BaseIntegratorType, typename IncoreIntegratorType>
 void ShellBatchedReplicatedXCIntegrator<BaseIntegratorType, IncoreIntegratorType>::
+  neo_eval_exc_vxc_( int64_t elec_m, int64_t elec_n, int64_t prot_m, int64_t prot_n, 
+                     const value_type* elec_Ps, int64_t elec_ldps,
+                     const value_type* prot_Ps, int64_t prot_ldps,
+                     const value_type* prot_Pz, int64_t prot_ldpz,
+                     value_type* elec_VXCs,     int64_t elec_ldvxcs,
+                     value_type* prot_VXCs,     int64_t prot_ldvxcs,
+                     value_type* prot_VXCz,     int64_t prot_ldvxcz,
+                     value_type* elec_EXC,  value_type* prot_EXC, const IntegratorSettingsXC& settings  ) {
+
+
+    GauXC::util::unused(elec_m, elec_n, prot_m, prot_n, elec_Ps, elec_ldps,
+      prot_Ps, prot_ldps, prot_Pz, prot_ldpz, elec_VXCs, elec_ldvxcs,
+      prot_VXCs, prot_ldvxcs, prot_VXCz, prot_ldvxcz, elec_EXC, prot_EXC, settings);  
+    GAUXC_GENERIC_EXCEPTION("NEO-UKS ShellBatched Not Yet Implemented");
+
+}
+
+template <typename BaseIntegratorType, typename IncoreIntegratorType>
+void ShellBatchedReplicatedXCIntegrator<BaseIntegratorType, IncoreIntegratorType>::
+  neo_eval_exc_vxc_( int64_t elec_m, int64_t elec_n, int64_t prot_m, int64_t prot_n, 
+                     const value_type* elec_Ps, int64_t elec_ldps,
+                     const value_type* elec_Pz, int64_t elec_ldpz,
+                     const value_type* prot_Ps, int64_t prot_ldps,
+                     const value_type* prot_Pz, int64_t prot_ldpz,
+                     value_type* elec_VXCs,     int64_t elec_ldvxcs,
+                     value_type* elec_VXCz,     int64_t elec_ldvxcz,
+                     value_type* prot_VXCs,     int64_t prot_ldvxcs,
+                     value_type* prot_VXCz,     int64_t prot_ldvxcz,
+                     value_type* elec_EXC,  value_type* prot_EXC, const IntegratorSettingsXC& settings  ) {
+
+    GauXC::util::unused(elec_m, elec_n, prot_m, prot_n, elec_Ps, elec_ldps, elec_Pz, elec_ldpz,
+      prot_Ps, prot_ldps, prot_Pz, prot_ldpz, elec_VXCs, elec_ldvxcs, elec_VXCz, elec_ldvxcz,
+      prot_VXCs, prot_ldvxcs, prot_VXCz, prot_ldvxcz, elec_EXC, prot_EXC, settings);  
+    GAUXC_GENERIC_EXCEPTION("NEO-UKS ShellBatched Not Yet Implemented");
+
+}
+
+template <typename BaseIntegratorType, typename IncoreIntegratorType>
+void ShellBatchedReplicatedXCIntegrator<BaseIntegratorType, IncoreIntegratorType>::
   exc_vxc_local_work_( const basis_type& basis, 
                        const value_type* Ps, int64_t ldps,
                        const value_type* Pz, int64_t ldpz,
@@ -390,18 +429,11 @@ void ShellBatchedReplicatedXCIntegrator<BaseIntegratorType, IncoreIntegratorType
   // Process selected task batch
 #ifdef GAUXC_HAS_DEVICE
   if constexpr (IncoreIntegratorType::is_device) {
-    if(Pz or Py or Py) 
-      GAUXC_GENERIC_EXCEPTION("Device UKS/GKS + ShellBatched NYI");
 
     incore_integrator.exc_vxc_local_work( basis_subset, Ps_submat, nbe, 
-      VXCs_submat, nbe, &EXC_tmp, &NEL_tmp, task_begin, task_end, 
-      *device_data_ptr_ );
-    // TODO: Make this work for UKS/GKS after 
-    // https://github.com/wavefunction91/GauXC/pull/91
-    //incore_integrator.exc_vxc_local_work( basis_subset, Ps_submat, nbe, 
-    //  Pz_submat, nbe, Py_submat, nbe, Px_submat, nbe, VXCs_submat, nbe,
-    //  VXCz_submat, nbe, VXCy_submat, nbe, VXCx_submat, nbe,
-    //  &EXC_tmp, &NEL_tmp, task_begin, task_end, *device_data_ptr_ );
+      Pz_submat, nbe, Py_submat, nbe, Px_submat, nbe, VXCs_submat, nbe,
+      VXCz_submat, nbe, VXCy_submat, nbe, VXCx_submat, nbe,
+      &EXC_tmp, &NEL_tmp, task_begin, task_end, *device_data_ptr_ );
   } else if constexpr (not IncoreIntegratorType::is_device) {
 #endif
     incore_integrator.exc_vxc_local_work( basis_subset, Ps_submat, nbe, 
